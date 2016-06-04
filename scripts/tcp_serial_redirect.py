@@ -54,7 +54,7 @@ class TCPSerialRedirector:
 
     def reader(self):
         """loop forever and copy serial->socket"""
-        while rospy.is_shutdown():
+        while not rospy.is_shutdown():
             try:
                 if self.fin:
                     data = self.fin.readline()  # Read a line from the file instead of from the serial port
@@ -100,7 +100,7 @@ class TCPSerialRedirector:
 
     def writer(self):
         """loop forever and copy socket->serial"""
-        while rospy.is_shutdown():
+        while not rospy.is_shutdown():
             try:
                 data = self.socket.recv(16)
                 if not data:
