@@ -261,7 +261,7 @@ if __name__ == '__main__':
     # Initting ROS node
     rospy.init_node('tcp_serial_redirect', anonymous=True)
 
-    while 1:
+    while not rospy.is_shutdown():
         try:
             print("Waiting for connection on %s..." % options.local_port)
             connection, addr = srv.accept()
