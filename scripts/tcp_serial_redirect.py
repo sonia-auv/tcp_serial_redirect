@@ -54,7 +54,7 @@ class TCPSerialRedirector:
 
     def reader(self):
         """loop forever and copy serial->socket"""
-        while self.alive:
+        while rospy.is_shutdown():
             try:
                 if self.fin:
                     data = self.fin.readline()  # Read a line from the file instead of from the serial port
@@ -87,12 +87,12 @@ class TCPSerialRedirector:
 
                 if self.fin:
                     time.sleep(self.sleeptime)
-            except IOError, msg:
-                print(msg)
-                break
             except socket.error, msg:
                 print msg
                 # probably got disconnected
+                break
+            except IOError, msg:
+                print(msg)
                 break
         self.alive = False
         if self.fin:
@@ -100,7 +100,7 @@ class TCPSerialRedirector:
 
     def writer(self):
         """loop forever and copy socket->serial"""
-        while self.alive:
+        while rospy.is_shutdown():
             try:
                 data = self.socket.recv(16)
                 if not data:
@@ -119,14 +119,6 @@ class TCPSerialRedirector:
                 break
         self.alive = False
         self.thread_read.join()
-
-    def stop(self):
-        """Stop copying"""
-        if self.alive:
-            self.alive = False
-            self.thread_read.join()
-            self.serial.close()
-        print("stop")
 
 
 class PassThroughOptionParser(OptionParser):
@@ -263,8 +255,6 @@ if __name__ == '__main__':
             print "--- reading from %s at %.2f Hz ---" % (
                 options.filename, options.freq)
 
-    init_serial_interface()
-
     init_tcp_interface()
 
     # Initting ROS node
@@ -275,10 +265,11 @@ if __name__ == '__main__':
             print("Waiting for connection on %s..." % options.local_port)
             connection, addr = srv.accept()
             print('Connected by', addr)
-            # enter console->serial loop
+            init_serial_interface()
             sys.stdout.flush()
             r = TCPSerialRedirector(ser, connection, options.filename, options.freq,
                                     options.sniff)
+            time.sleep(1)
             r.shortcut()
             ser.close()
             connection.close()
